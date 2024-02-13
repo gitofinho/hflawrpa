@@ -1,9 +1,9 @@
-import pythoncom
+#import pythoncom
 import streamlit as st
 from HwpRecommend import HwpRecommender
 
 # COM 라이브러리 초기화
-pythoncom.CoInitialize()
+#pythoncom.CoInitialize()
 
 # Streamlit 세션 상태 초기화
 if 'run_once' not in st.session_state:
@@ -32,4 +32,4 @@ for uploaded_file in uploaded_files:
                 )
 
 # COM 라이브러리 정리
-pythoncom.CoUninitialize()
+# pythoncom.CoUninitialize()
