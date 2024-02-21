@@ -1,14 +1,19 @@
 import pandas as pd
 from pyhwpx import Hwp
 from datetime import datetime
+import os
+
+UPLOAD_DIRECTORY = "./uploaded_files"
+PROCESS_DIRECTORY = "./processed_files"
 
 class HwpRecommender:
-    def __init__(self, excel_path = "target.xlsx", hwp_path=""):
+    def __init__(self, excel_path = "target.xlsx", hwp_path="", file_name="None"):
         self.excel_path = excel_path
         self.hwp_path = hwp_path
         self.df = None
         self.hwp = None
-        self.new_file_path = ""
+        self.new_file = ""
+        self.file_name = file_name
 
     def read_excel(self):
         # Excel 파일에서 추천 용어 읽기
@@ -35,10 +40,22 @@ class HwpRecommender:
                     self.hwp.insert_memo(self.df.iloc[idx].Recommendation)
 
     def save_hwp(self):
+        # 현재 날짜 기반으로 폴더 이름 생성
+        date_folder = datetime.now().strftime("%Y%m%d")
+        # 최종 경로에 날짜 폴더 포함
+        final_directory = os.path.join(PROCESS_DIRECTORY, date_folder)
+        # 해당 날짜의 폴더가 없으면 생성
+        if not os.path.exists(final_directory):
+            os.makedirs(final_directory)
+        # 파일 이름 생성
         current_time = datetime.now().strftime("%y%m%d%H%M%S")
-        new_file_path = f"./memo_revision_{current_time}.hwp"
-        self.hwp.save_as(new_file_path)
-        return new_file_path  # 수정된 파일의 경로를 반환
+        new_file_name = f"{self.file_name}_memo.hwp"
+        # 파일 전체 경로 설정
+        file_path = os.path.join(final_directory, new_file_name)
+        # 파일 저장
+        self.hwp.save_as(file_path)
+        # 저장된 파일의 경로 반환
+        return new_file_name
 
     def down(self):
         self.hwp.FileQuit()
@@ -48,13 +65,6 @@ class HwpRecommender:
         self.read_excel()
         self.load_hwp()
         self.replace_terms()
-        self.new_file_path = self.save_hwp()
+        self.new_file_name = self.save_hwp()
         self.down()
-        return self.new_file_path
-
-## 사용 예
-#excel_path = 'target.xlsx'
-#hwp_path = 'example.hwp'
-#recommender = HwpRecommender(excel_path, hwp_path)
-#path = recommender.run()
-#print(path)
+        return self.new_file_name
