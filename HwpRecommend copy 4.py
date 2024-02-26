@@ -85,7 +85,7 @@ class HwpRecommender:
         self.close_hwp()
         return file_name
 
-# # 사용 예
-# recommender = HwpRecommender("target.xlsx", "240221_1613.hwp", "240221_1613.hwp")
-# memo_file_name = recommender.process_hwp("memo")
-# cor_file_name = recommender.process_hwp("cor")
+# 사용 예
+recommender = HwpRecommender("target.xlsx", "240221_1613.hwp", "240221_1613.hwp")
+memo_file_name = recommender.process_hwp("memo")
+cor_file_name = recommender.process_hwp("cor")

@@ -24,7 +24,7 @@ class HwpRecommender:
         self.hwp = Hwp()
         self.hwp.open(self.hwp_path)
 
-    def memo_terms(self):
+    def replace_terms(self):
         # HWP 내용 읽기
         content = self.hwp.get_text_file()
         
@@ -38,23 +38,6 @@ class HwpRecommender:
                 act.GetDefault(cs)
                 if cs.Item("UnderlineType"):
                     self.hwp.insert_memo(self.df.iloc[idx].Recommendation)
-
-    def cor_terms(self):
-        # HWP 내용 읽기
-        content = self.hwp.get_text_file()
-        # 용어 찾아서 추천 용어로 교체
-        for idx, val in enumerate(self.df.Target):
-            count = content.count(val)
-            for i in range(count):
-                self.hwp.find(val, "Backward")
-                act = self.hwp.create_action("CharShape")
-                cs = act.CreateSet()
-                act.GetDefault(cs)
-                if cs.Item("UnderlineType"):
-                    self.hwp.find_replace_all(val, self.df.iloc[idx].Recommendation)
-                    # 반복 처리 방지를 위한 밑줄 제거
-                    cs.SetItem("UnderlineType", False)
-                    act.Execute(cs)
 
     def save_hwp(self, suffix):
         # 파일 저장 공통 로직
@@ -76,16 +59,15 @@ class HwpRecommender:
         # 공통 프로세스 실행
         self.read_excel()
         self.load_hwp()
+        self.replace_terms()
         if type == "memo":
-            self.memo_terms()
             file_name = self.save_hwp("memo")
         else:
-            self.cor_terms()
             file_name = self.save_hwp("cor")
         self.close_hwp()
         return file_name
 
-# # 사용 예
-# recommender = HwpRecommender("target.xlsx", "240221_1613.hwp", "240221_1613.hwp")
-# memo_file_name = recommender.process_hwp("memo")
-# cor_file_name = recommender.process_hwp("cor")
+# 사용 예
+recommender = HwpRecommender("target.xlsx", "240221_1613.hwp", "240221_1613.hwp")
+memo_file_name = recommender.process_hwp("memo")
+cor_file_name = recommender.process_hwp("cor")

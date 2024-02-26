@@ -1,49 +1,49 @@
-import pythoncom
 import streamlit as st
-from HwpRecommend import HwpRecommender
-from io import BytesIO
 import requests
+import pythoncom
 
 # FastAPI 서버 주소
-FASTAPI_ENDPOINT = "http://localhost:8000"  
+FASTAPI_ENDPOINT = "http://localhost:8000"
 # COM 라이브러리 초기화
 pythoncom.CoInitialize()
 
-# Streamlit 세션 상태 초기화
-if 'run_once' not in st.session_state:
-    st.session_state['run_once'] = False
+st.set_page_config(page_title='HFDT-Platform' ,layout="wide",page_icon='🚀')
+"## 🚀 HFRPA-LAW"
+st.write("")
+st.info("내규 제·개정 대상 전후대비표, 원문을 업로드 해주세요. 정비 대상 용어를 확인해줍니다.")
 
 uploaded_files = st.file_uploader("Choose a HWP file-", accept_multiple_files=True, type=["hwp"])
 
+# 파일 업로드 상태 관리를 위한 세션 상태 초기화
+if 'uploaded_files_status' not in st.session_state:
+    st.session_state['uploaded_files_status'] = {}
+
 for uploaded_file in uploaded_files:
-    if uploaded_file is not None and not st.session_state['run_once']:
-        with st.spinner('Wait for it...'):
-            files = {"file": (uploaded_file.name, uploaded_file, "application/octet-stream")}
-            response = requests.post(f"{FASTAPI_ENDPOINT}/upload-hwp/", files=files)
-            if response.status_code == 200:
-                st.success("File uploaded successfully.")
-                st.session_state['run_once'] = True  # run() 실행 플래그 설정
-                st.success('Done!')
-                try:
-                    # FastAPI 서버에서 파일 내용을 가져오기
-                    file_path = f"http://localhost:8000/download-hwp/{response.json()['filename']}"
-                    download_filename = response.json()['filename']
-                    response = requests.get(file_path)
-                    if response.status_code == 200:
-                        # 메모리에 파일 내용 저장
-                        to_download = BytesIO(response.content)
-                        to_download.seek(0)
-                        # Streamlit의 다운로드 버튼에 파일 내용 전달
-                        st.download_button(label="Download Result",
-                                        data=to_download,
-                                        file_name=download_filename,  # 파일 이름을 문자열로 지정
-                                        mime="application/octet-stream")
-                    else:
-                        st.error("Failed to download file.")
-                except Exception as e:
-                    st.error(f"Error: {e}")
-            else:
-                st.error("Failed to upload file.")
+    if uploaded_file is not None:
+        # 파일별 처리 상태 확인 및 파일이 아직 처리되지 않았다면 처리 진행
+        if not st.session_state['uploaded_files_status'].get(uploaded_file.name, False):
+            with st.spinner('Processing...'):
+                files = {"file": (uploaded_file.name, uploaded_file, "application/octet-stream")}
+                response = requests.post(f"{FASTAPI_ENDPOINT}/upload-hwp/", files=files)
+                if response.status_code == 200:
+                    # 파일 처리 상태 업데이트
+                    st.session_state['uploaded_files_status'][uploaded_file.name] = True
+                    
+                    st.success(f"{response.json()['memo_filename']} File uploaded and processed successfully.")
+                    download_text1 = f"Download Memo Version File"
+                    download_url1 = f"{FASTAPI_ENDPOINT}/download-hwp/{response.json()['memo_filename']}"
+                    download_text2 = f"Download Correction Version File"
+                    download_url2 = f"{FASTAPI_ENDPOINT}/download-hwp/{response.json()['cor_filename']}"
+                    st.markdown(f'''
+                        <div>
+                            <a href="{download_url1}" download style="color: Black; background-color: #E0E0E0; padding: 10px; border-radius: 5px; text-decoration: none; display: inline-block; margin-right: 10px;">{download_text1}</a>
+                            <a href="{download_url2}" download style="color: Black; background-color: #E0E0E0; padding: 10px; border-radius: 5px; text-decoration: none; display: inline-block;">{download_text2}</a>
+                        </div>
+                    ''', unsafe_allow_html=True)
+                else:
+                    # 파일 처리 실패 시 상태 업데이트는 필요 없음
+                    st.error("Failed to upload file.")
+
 
 # COM 라이브러리 정리
 pythoncom.CoUninitialize()

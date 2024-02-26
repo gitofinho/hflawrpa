@@ -5,7 +5,6 @@ from urllib.parse import unquote
 from HwpRecommend import HwpRecommender
 import os
 from datetime import datetime
-import time
 
 app = FastAPI()
 
@@ -19,20 +18,19 @@ async def upload_hwp(file: UploadFile = File(...)):
     # 최종 경로에 날짜 폴더 포함
     temp_directory = os.path.join(UPLOAD_DIRECTORY, date_folder)
     file_path = os.path.join(temp_directory, file.filename)
+    modified_hwp_path = None
     os.makedirs(temp_directory, exist_ok=True)
     try:
         with open(file_path, "wb") as buffer:
             buffer.write(await file.read()) 
         try:
             recommender = HwpRecommender(hwp_path=file_path, file_name=file.filename)
-            memo_file_name = recommender.process_hwp("memo")
-            time.sleep(0.5)
-            cor_file_name = recommender.process_hwp("cor")
-
+            memo_hwp_path = recommender.memo_run()
+            cor_hwp_path = recommender.cor_run()
         except Exception as e:
             print(e)
             raise HTTPException(status_code=500, detail=f"Failed to process HWP file: {e}")
-        return {"memo_filename": memo_file_name, "cor_filename": cor_file_name}
+        return {"memo_filename": memo_hwp_path, "cor_filename": cor_hwp_path}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"File upload failed: {e}")
 
