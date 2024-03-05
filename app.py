@@ -22,7 +22,7 @@ for uploaded_file in uploaded_files:
     if uploaded_file is not None:
         # 파일별 처리 상태 확인 및 파일이 아직 처리되지 않았다면 처리 진행
         if not st.session_state['uploaded_files_status'].get(uploaded_file.name, False):
-            with st.spinner('Processing...'):
+            with st.spinner('RPA Processing...'):
                 files = {"file": (uploaded_file.name, uploaded_file, "application/octet-stream")}
                 response = requests.post(f"{FASTAPI_ENDPOINT}/upload-hwp/", files=files)
                 if response.status_code == 200:
